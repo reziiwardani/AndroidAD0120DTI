@@ -1,0 +1,48 @@
+os: linux
+language: android
+jdk: oraclejdk8
+env:
+  global:
+    - ANDROID_API_LEVEL=29
+    - ANDROID_BUILD_TOOLS_VERSION=29.0.2
+
+android:
+  licenses:
+    - 'android-sdk-preview-licenses-.+'
+    - 'android-sdk-licenses-.+'
+    - 'google-gdk-licenses-.+'
+  components:
+    - build-tools-29.0.2
+    - android-29
+    - platform-tools
+    - tools
+
+    # Additional components
+    - extra-google-google_play_services
+    - extra-google-m2repository
+    - extra-android-m2repository
+    - addon-google_apis-google-$ANDROID_API_LEVEL
+
+before_script:
+  - yes | sdkmanager "platforms;android-29"
+  - yes | sdkmanager "build-tools;29.0.2"
+
+script:
+  - chmod +x ./gradlew
+  - ./gradlew assembleRelease
+
+deploy:
+  provider: releases
+  api_key: $GITHUB_API_KEY
+  file: $TRAVIS_BUILD_DIR/app/build/outputs/apk/release/app-release.apk
+  skip_cleanup: true
+  name: dev-build-$TRAVIS-TAG
+  body: Automatic build of $TRAVIS_BRANCH ($TRAVIS_COMMIT) built by Travis CI
+  prerelease: true
+  overwrite: true
+  target_commitish: $TRAVIS_COMMIT
+  on:
+    tags: true
+
+after_deploy:
+  - rm -rf $TRAVIS_BUILD_DIR/app/build/outputs
